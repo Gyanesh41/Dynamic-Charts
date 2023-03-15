@@ -3,8 +3,8 @@ import numpy as np;
 import pandas as pd;
 import seaborn as sns;
 
-argdict={'library':None,'data':None,'charttype':None,
-         'x':None,'y':None,'color':None,'marker':None,'bins':None,'title':None,
+argdict={'library':None,'data':None,'charttype':None,'x':None,'y':None,
+         'color':None,'marker':None,'bins':None,'title':None,'xlabel':None,'ylabel':None,
          'xticks':None,'yticks':None,'rotate_x':None,'xticklabel':None,'yticklabel':None,
          'rotate_y':None,'xlim':None,'ylim':None,'savename':None}
 
@@ -34,6 +34,7 @@ def dynamic_chart(argdict):
     plt.tight_layout()
     plt.savefig(argdict.get('savename'))
     plt.show()
+    exit()
 
 def preinputs(argdict):
     library=input("Please provide the library you want to use ['matplotlib'/'seaborn'] : ")
@@ -64,8 +65,8 @@ def inplot_feature(argdict):
         if askbin=='y':bins=int(input("Please provide no. of bins : "))
         elif askbin=='n':print("")
         else:print("Error : wrong input");exit()
-    argdict.update([('x',x),('y',y),('color',color),('bins',bins),('marker',marker)])
-    autotick(argdict)
+    argdict.update([('x',x),('y',y),('color',color),('bins',bins),('marker',marker),('xlabel',x),('ylabel',y)])
+    if argdict['charttype']!='heatmap':autotick(argdict)
     
 def postinputs(argdict):
     title=None;rotate_x=None;rotate_y=None;xtick=None;ytick=None;ylim=None;xlim=None
@@ -73,7 +74,7 @@ def postinputs(argdict):
     while(access=='y'):
         if argdict['charttype']=='pie':addfeature=input("['title'] \nPlease select additional feature : ")
         elif argdict['charttype']=='heatmap':addfeature=input("['title','rotate_x','rotate_y']\nPlease select additional feature : ")
-        else:addfeature=input("['title','rotate_x','rotate_y','xtick','ytick','xlimit','ylimit']\nPlease select additional feature : ")
+        else:addfeature=input("['title','rotate_x','rotate_y','xlabel','ylabel','xtick','ytick','xlimit','ylimit']\nPlease select additional feature : ")
         if (addfeature=='title'):title=input("Please provide the title for plot : ")
         elif (addfeature=='rotate_x') and (argdict['charttype']!='pie'):rotate_x=int(input("Please provide the angle of rotation for xlabels : "))
         elif (addfeature=="rotate_y") and (argdict['charttype']!='pie'):rotate_y=int(input("Please provide the angle of rotation for ylabels : "))
@@ -81,11 +82,13 @@ def postinputs(argdict):
         elif (addfeature=="ytick") and (argdict['charttype'] not in ['pie','heatmap']):yticks(argdict)
         elif (addfeature=="xlimit") and (argdict['charttype'] not in ['pie','heatmap']):xlimit(argdict)
         elif (addfeature=="ylimit") and (argdict['charttype'] not in ['pie','heatmap']):ylimit(argdict)
+        elif (addfeature=="xlabel") and (argdict['charttype'] not in ['pie','heatmap']):xlabel=input("Please provide xlabel : ");argdict.update([('xlabel',xlabel)])
+        elif (addfeature=="ylabel") and (argdict['charttype'] not in ['pie','heatmap']):ylabel=input("Please provide ylabel : ");argdict.update([('ylabel',ylabel)])        
         else:print("Error : Wrong Feature");exit()
         access=input("Do you want to use more addtional features [y/n] : ")
     argdict.update([('title',title),('rotate_x',rotate_x),('rotate_y',rotate_y),('xtick',xtick),('ytick',ytick),('ylim',ylim),('xlim',xlim)])
 
-def seaborn(argdict):
+def seaborn(argdict): 
     if argdict.get('charttype')=="scatter":scattersns(argdict)
     elif argdict.get('charttype')=="line":linesns(argdict)
     elif argdict.get('charttype')=="count":countsns(argdict)
@@ -122,10 +125,11 @@ def countsns(argdict):
     sns.countplot(data=argdict['data'],x=argdict['x'],color=argdict['color'])
        
 def histsns(argdict):
+    argdict.update([('bins',8)])if (argdict['bins']==None) else print("")
     sns.histplot(data=argdict['data'],x=argdict['x'],color=argdict['color'],bins=argdict['bins']);argdict.update([('y','Frequency')])
 
 def barsns(argdict):
-    sns.barplot(data=argdict['data'],x=argdict['x'],y=argdict['y'],color=argdict.get('color'))
+    sns.barplot(data=argdict['data'],x=argdict['x'],y=argdict['y'])
 
 def piemat(argdict,df):
     count=df[argdict['x']].value_counts().reset_index()
@@ -148,36 +152,41 @@ def histmat(argdict,df):
     plt.hist(df[argdict['x']],edgecolor='k',color=argdict['color'],bins=argdict['bins']);argdict.update([('y','Frequency')])   
     
 def barmat(argdict,df):
-    plt.bar(df[argdict['x']],height=df[argdict['y']],color=argdict['color'])
+    x_value=list(df[argdict['x']].unique())
+    x_value.sort()
+    y=pd.DataFrame(df.groupby(argdict['x']).mean()[argdict['y']])
+    y=y[argdict['y']]
+    plt.bar(x=x_value,height=y,color=argdict['color'])
 
 def scattermat(argdict,df):
     plt.scatter(df[argdict['x']],df[argdict['y']],marker=argdict['marker'],c=argdict.get('color'))  
 
 def autotick(argdict):
-    if argdict['charttype'] not in ['pie','heatmap']:
+    if argdict['charttype']!='pie':
         if type(argdict['data'][argdict['x']][1])==str:
-            total=argdict['data'][argdict['x']].unique()
+            total=list(argdict['data'][argdict['x']].unique())
+            total.sort()
             if len(total)>20:
                 index = round(len(total)/4);labellist=[]
                 labelindex = 0;lindex=[]
                 for i in range (5): 
-                    if labelindex <= len(total):
+                    if labelindex <= len(total)-2:
                         labellist.append(total[labelindex])
                         lindex.append(labelindex)
                         labelindex=labelindex+index
                     else:
-                        labellist.append(total[len(total)-1])
-                        lindex.append(len(total)-1)
+                        labellist.append(total[-1])
+                        lindex.append(len(total))
                 argdict.update([('xticks',lindex),('xticklabel',labellist)])
 
 def xticks(argdict):
     xtickno=int(input("Please provide no. of xlabels you want : "))
-    xtick=ticklabels(xtickno);print(xtick[1],"/n",xtick[0]);
+    xtick=ticklabels(xtickno);print(xtick[1],"\n",xtick[0]);
     argdict.update([('xticklabel',xtick[0]),('xticks',xtick[1])])
     
 def yticks(argdict):
     ytickno=int(input("Please provide no. of ylabels you want : "))
-    ytick=ticklabels(ytickno);print(ytick[1],"/n",ytick[0]);
+    ytick=ticklabels(ytickno);print(ytick[1],"\n",ytick[0]);
     argdict.update([('yticklabel',ytick[0]),('yticks',ytick[1])])
 
 def ticklabels(tickno):
