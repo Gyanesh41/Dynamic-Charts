@@ -3,7 +3,7 @@ import numpy as np;
 import pandas as pd;
 import seaborn as sns;
 
-argdict={'library':None,'data':None,'charttype':None,'x':None,'y':None,
+argdict={'library':None,'data':None,'charttype':None,'x':None,'y':None,'legend':None,
          'color':None,'marker':None,'bins':None,'title':None,'xlabel':None,'ylabel':None,
          'xticks':None,'yticks':None,'rotate_x':None,'xticklabel':None,'yticklabel':None,
          'rotate_y':None,'xlim':None,'ylim':None,'savename':None}
@@ -11,12 +11,12 @@ argdict={'library':None,'data':None,'charttype':None,'x':None,'y':None,
 def dynamic_chart(argdict):
     preinputs(argdict)
     if argdict.get('library')=="seaborn":
-        charttype=input("[ 'heatmmap' , 'count' , 'bar' , 'hist' , 'line' ,'scatter' ]\nPlease provide chart type : ")    
+        charttype=input("[ 'heatmmap' , 'count' , 'bar' , 'hist' , 'line' ,'scatter' ]\nPlease provide chart type : ").casefold()    
         argdict.update([('charttype',charttype)])
         inplot_feature(argdict)
         seaborn(argdict)
     elif argdict.get('library')=="matplotlib":
-        charttype=input("[ 'pie' , 'count' , 'bar' , 'hist' , 'line' , 'scatter' ]\nPlease provide chart type : ")
+        charttype=input("[ 'pie' , 'count' , 'bar' , 'hist' , 'line' , 'scatter' ]\nPlease provide chart type : ").casefold()
         argdict.update([('charttype',charttype)])
         inplot_feature(argdict)
         df=argdict.get("data")
@@ -37,19 +37,15 @@ def dynamic_chart(argdict):
     exit()
 
 def preinputs(argdict):
-    library=input("Please provide the library you want to use ['matplotlib'/'seaborn'] : ")
     path=input("Please provide the path of dataset : ")
     data=pd.read_csv(path)
+    library=input("Please provide the library you want to use ['matplotlib'/'seaborn'] : ").casefold()
     argdict.update([('library',library),('data',data)])
 
 def inplot_feature(argdict):
-    color=sns.color_palette(palette='bright');x=None;y=None;marker=None;bins=None
+    x=None;y=None;marker=None;bins=None
     if argdict['charttype'] not in ['pie','heatmap']:
-        askcolor=input("Do you want to use your colors [y/n] : ")
-        if askcolor=="y":color=input("[ 'blue':'b' , 'red':'r' , 'black':'k' , 'green':'g', 'if other color, provide name in small letter' ]\nPlease provide color : ")
-        elif askcolor=="n":
-            if argdict['charttype'] in ["line","scatter"]:color="blue"
-        else :print("Error : Wrong Input");exit()
+        color(argdict)
     if argdict['charttype'] in ['pie','count']:
         x=input('Please provide column for plot : ')
     elif argdict['charttype']=='bar':
@@ -65,16 +61,25 @@ def inplot_feature(argdict):
         if askbin=='y':bins=int(input("Please provide no. of bins : "))
         elif askbin=='n':print("")
         else:print("Error : wrong input");exit()
-    argdict.update([('x',x),('y',y),('color',color),('bins',bins),('marker',marker),('xlabel',x),('ylabel',y)])
+    argdict.update([('x',x),('y',y),('bins',bins),('marker',marker),('xlabel',x),('ylabel',y)])
     if argdict['charttype']!='heatmap':autotick(argdict)
-    
+
+def color(argdict):
+    color=sns.color_palette(palette='bright')
+    askcolor=input("Do you want to use your colors [y/n] : ")
+    if askcolor=="y":color=input("[ 'blue':'b' , 'red':'r' , 'black':'k' , 'green':'g', 'if other color, provide name in small letter' ]\nPlease provide color : ")
+    elif askcolor=="n":
+        if argdict['charttype'] in ["line","scatter"]:color="blue"
+    else :print("Error : Wrong Input");exit();
+    argdict.update([('color',color)])
+
 def postinputs(argdict):
     title=None;rotate_x=None;rotate_y=None;xtick=None;ytick=None;ylim=None;xlim=None
-    access=input('Do you want use adititonal feature [y/n] :')
+    access=input('Do you want use adititonal feature [y/n] :').casefold()
     while(access=='y'):
         if argdict['charttype']=='pie':addfeature=input("['title'] \nPlease select additional feature : ")
         elif argdict['charttype']=='heatmap':addfeature=input("['title','rotate_x','rotate_y']\nPlease select additional feature : ")
-        else:addfeature=input("['title','rotate_x','rotate_y','xlabel','ylabel','xtick','ytick','xlimit','ylimit']\nPlease select additional feature : ")
+        else:addfeature=input("['title','rotate_x','rotate_y','xlabel','ylabel','xtick','ytick','xlimit','ylimit']\nPlease select additional feature : ").casefold()
         if (addfeature=='title'):title=input("Please provide the title for plot : ")
         elif (addfeature=='rotate_x') and (argdict['charttype']!='pie'):rotate_x=int(input("Please provide the angle of rotation for xlabels : "))
         elif (addfeature=="rotate_y") and (argdict['charttype']!='pie'):rotate_y=int(input("Please provide the angle of rotation for ylabels : "))
@@ -115,7 +120,7 @@ def linesns(argdict):
     sns.lineplot(data=argdict.get('data'),x=argdict['x'],y=argdict['y'],marker=argdict['marker'],color=argdict['color']);
     
 def heatsns(argdict):
-    anot=input("Please give t(true) or f(false) if you want annotation or not : ")
+    anot=input("Please give t(true) or f(false) if you want annotation or not : ").casefold()
     if anot=='t':anot=True;
     elif anot=='f':anot=False;
     else:print("Wrong Annotation");exit()
